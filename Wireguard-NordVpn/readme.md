@@ -1,4 +1,4 @@
-# HomeLab - VPN Bridge with WireGuard + NordVPN Containers
+# VPN Bridge with WireGuard + NordVPN Containers
 
 This project 
 
