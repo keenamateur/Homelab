@@ -45,7 +45,6 @@ services:
       - /dev/net/tun:/dev/net/tun
     volumes:
       - ./config/gluetun:/gluetun
-#    command: ["/bin/bash", "/srv/docker/system/vpn_de/start_nvpn.sh"]
     env_file:
       - .env
     environment:
@@ -54,8 +53,6 @@ services:
       - SERVER_COUNTRIES=JUGOSLAVIA
       - COUNTRY_CODE=MoRDoR
       - TZ=Europe/Berlin
-      #- WIREGUARD_ADDRESSES=10.5.0.2/32
-      #- WIREGUARD_PRIVATE_KEY=$${PRIVATE_KEY}
       - OPENVPN_USER= ${OPENVPN_USER}
       - OPENVPN_PASSWORD= ${OPENVPN_PASSWORD}
       - NET_LOCAL=192.168.2.0/24
