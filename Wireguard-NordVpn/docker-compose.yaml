@@ -18,13 +18,12 @@ services:
     env_file:
       - .env
     environment:
-      - WG_HOST=${WG_HOST}
+      - WG_HOST=${WG_HOST}   # your ip or domain or dyndns
       - PASSWORD_HASH= ${PASSWORD_HASH}
       - WG_DEFAULT_ADDRESS=10.10.50.x
       - WG_ALLOWED_IPS=0.0.0.0/0
-      - WG_DEFAULT_DNS=103.87.99.100, 103.86.99.100
+      - WG_DEFAULT_DNS=103.87.99.100, 103.86.99.100  # nordvpn dns
       - UI_TRAFFIC_STATS=true
-      #- WG_POST_UP=/srv/docker/system/vpnbridge/start.sh
     # labels:
     #   - "traefik.enable=true"
     #   - "traefik.tcp.routers.wg_de.entrypoints=wg_tcp"
@@ -52,8 +51,8 @@ services:
     environment:
       - VPN_SERVICE_PROVIDER=nordvpn
       - VPN_TYPE=openvpn
-      - SERVER_COUNTRIES=Germany
-      - COUNTRY_CODE=DE
+      - SERVER_COUNTRIES=JUGOSLAVIA
+      - COUNTRY_CODE=MoRDoR
       - TZ=Europe/Berlin
       #- WIREGUARD_ADDRESSES=10.5.0.2/32
       #- WIREGUARD_PRIVATE_KEY=$${PRIVATE_KEY}
