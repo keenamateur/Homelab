@@ -20,7 +20,7 @@ ip route add $WG_SUBNET via $VPN_IP dev proxy_net
 iptables -D TCP -p tcp -m multiport --dports 20,21,81,139,445 -s $VPN_IP -j ACCEPT
 iptables -I TCP 1 -p tcp -m multiport --dports 20,21,81,139,445 -s $VPN_IP -j ACCEPT
 iptables -D TCP -p tcp -m multiport --dports 9000,9443,51821 -s $VPN_IP -j ACCEPT
-iptables -I TCP 1 -p tcp -m multiport --dports 9000,944351821 -s $VPN_IP -j ACCEPT
+iptables -I TCP 1 -p tcp -m multiport --dports 9000,9443,51821 -s $VPN_IP -j ACCEPT
 
 # WG->NORD
 docker exec -it $VPN_CONTAINER iptables -A FORWARD -i wg0 -o tun0 -j ACCEPT
