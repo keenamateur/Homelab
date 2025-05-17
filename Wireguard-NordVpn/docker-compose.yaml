@@ -56,7 +56,7 @@ services:
       - OPENVPN_USER= ${OPENVPN_USER}
       - OPENVPN_PASSWORD= ${OPENVPN_PASSWORD}
       - NET_LOCAL=192.168.2.0/24
-      - SERVER=BEST
+      #- SERVER=BEST   # uncommenting this "disables" the country_code option in some cases
     ports:
       - '51850:51820/udp'
       - '51851:51821/tcp'
