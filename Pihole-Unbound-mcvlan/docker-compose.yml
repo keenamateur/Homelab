@@ -30,12 +30,12 @@ networks:
     driver: macvlan
     attachable: true
     driver_opts:
-      parent: enp3s0
+      parent: enp3s0    # Update this field to match your environment
     ipam:
       config:
-        - subnet: 192.168.2.0/24
-          gateway: 192.168.2.1
-          ip_range: 192.168.2.48/28
+        - subnet: 192.168.2.0/24      # Update these fields to match your environment
+          gateway: 192.168.2.1        # Update these fields to match your environment
+          ip_range: 192.168.2.48/28   # Update these fields to match your environment
 
 services:
   pihole:
@@ -104,4 +104,3 @@ services:
     networks:
       macvlan_net:
         ipv4_address: 192.168.2.50
-        mac_address: 76-55-F1-BE-6B-6B
