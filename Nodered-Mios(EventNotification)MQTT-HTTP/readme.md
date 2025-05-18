@@ -11,9 +11,9 @@ This flow integrates multiple home automation systems including:
 
 ### Node-RED Plugins
 <div style="display: flex; gap: 10px;">
-  <img src="Nodered-Mios(EventNotification)MQTT-HTTP/nr_plugin1.png" alt="Plugin 1" width="300"/>
-  <img src="Nodered-Mios(EventNotification)MQTT-HTTP/nr_plugin2.png" alt="Plugin 2" width="300"/>
-  <img src="Nodered-Mios(EventNotification)MQTT-HTTP/nodered_full.png" alt="nodered" width="300"/>
+  <img src="/docs/images/nr_plugin1.png" alt="Plugin 1" width="45%"/>
+  <img src="docs/images/nr_plugin2.png" alt="Plugin 2" width="45%"/>
+  <img src="docs/images/nodered_full.png" alt="nodered" width="90%"/>
 </div>
 
 ---
