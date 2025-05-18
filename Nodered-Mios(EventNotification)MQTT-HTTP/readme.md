@@ -9,14 +9,17 @@ This flow integrates multiple home automation systems including:
 - **HTTP APIs** for device control
 - **Join** notification service
 
+### Node-RED 
+<div style="display: flex; gap: 10px;">
+  <img src="Nodered-Mios(EventNotification)MQTT-HTTP/nodered_full.png" alt="nodered" width="800"/>
+</div>
+
 ### Node-RED Plugins
 <div style="display: flex; gap: 10px;">
   <img src="/docs/images/nr_plugin1.png" alt="Plugin 1" width="45%"/>
   <img src="docs/images/nr_plugin2.png" alt="Plugin 2" width="45%"/>
   <img src="docs/images/nodered_full.png" alt="nodered" width="90%"/>
 </div>
-
----
 
 
 ## **Key Functional Areas**
