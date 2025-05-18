@@ -1,5 +1,5 @@
 ### **Home Automation Hub**  
-**Node-RED Integration for Vera & Smart Devices**  
+**Tasker, Node-RED Integration and Monitoring for Vera & Smart Devices**  
 
 *A centralized system connecting Vera controllers, MQTT devices, HTTP and notification services*  
 
