@@ -1,0 +1,104 @@
+// Function to convert Vera device messages to InfluxDB format
+
+
+// Validate input message
+if (typeof msg.topic !== "string" || msg.topic.trim() === "") {
+    return null;
+}
+
+// Parse the topic using regex
+const topicRegex = /^([^:]+):([^:]+):([^:]+)$/;
+const match = msg.topic.match(topicRegex);
+
+if (!match) {
+    return null;
+}
+
+const [_, room, device, parameter] = match;
+let value = msg.payload;
+
+// List of allowed rooms and parameters
+const allowedRooms = ["Nappali", "Konyha", "Fürdő", "Háló", "Terasz",
+    "Biztonság", "Műhely", "Garázs", "Áram", "Szerver", "Szenzor"];
+const allowedParameters = ["Status", "LoadLevelStatus", "Tripped"];
+
+// Validate room and parameter
+if (!allowedRooms.includes(room) || !allowedParameters.includes(parameter)) {
+    return null;
+}
+
+// Enhanced value conversion
+const convertValue = (val, param) => {
+    // Handle boolean values
+    if (typeof val === 'boolean') {
+        return val ? 1 : 0;
+    }
+
+    // Handle string representations
+    if (typeof val === 'string') {
+        val = val.trim().toLowerCase();
+        if (val === 'true') return 1;
+        if (val === 'false') return 0;
+        if (val === 'on') return 1;
+        if (val === 'off') return 0;
+    }
+
+    // Convert to number for numeric parameters
+    const numericParams = ["Watts", "Volts", "CurrentTemperature", "CurrentHumidity",
+        "LoadLevelStatus", "Amp", "KWHReading", "Light", "BatteryLevel"];
+    if (numericParams.includes(param)) {
+        const num = parseFloat(val);
+        return isNaN(num) ? null : num;
+    }
+
+    return val;
+};
+
+value = convertValue(value, parameter);
+
+// Skip if we couldn't get a valid value
+if (value === null || value === undefined) {
+    return null;
+}
+
+// Create InfluxDB data structure
+const timestamp = Date.now();
+const measurement = "vera_ac";
+
+// Get previous device data from context
+const previousData = context.get(device) || { fields: {} };
+
+// Prepare the data point
+const dataPoint = {
+    measurement,
+    tags: {
+        room,
+        device
+    },
+    fields: {
+        ...previousData.fields,
+        [parameter]: value
+    },
+    timestamp
+};
+
+// Store current data in context for future messages
+context.set(device, dataPoint);
+
+// Prepare the InfluxDB payload
+const output = {
+    bucket: 'veradata',
+    precision: 'ms',
+    data: [dataPoint]
+};
+
+// Add additional metadata if needed
+if (parameter === 'LoadLevelStatus' && device.includes('Fali')) {
+    output.data[0].fields['brightness'] = value;
+}
+
+if (parameter === 'Status') {
+    output.data[0].fields['power'] = value ? 'on' : 'off';
+}
+
+return { payload: output };

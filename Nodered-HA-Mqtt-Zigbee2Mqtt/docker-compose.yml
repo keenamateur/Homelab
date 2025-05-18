@@ -72,19 +72,19 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:8080"  # http UI
+      - "8080:8080"   # http UI
     devices:
       - /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0:/dev/ttyUSB0  # lsusb ; ls -la /dev/serial/by-id/
     volumes:
       - ./zigbee2mqtt/data:/app/data  # Configuration and data
-      - /run/udev:/run/udev:ro       # USB 
+      - /run/udev:/run/udev:ro        # USB 
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.z2mqtt.entrypoints=http"
       - "traefik.http.routers.z2mqtt.rule=Host(`z2mqtt.$MY_DOMAIN`)"
       - "traefik.http.services.z2mqtt.loadbalancer.server.port=8080"
     environment:
-      - TZ=Europe/Budapest
+      - TZ=Europe/Berlin
     networks:
       proxy_net:
         ipv4_address: 172.30.10.12
@@ -107,8 +107,8 @@ services:
     ports:
       - "8123:8123"  # Home Assistant http UI
     depends_on:
-      - zigbee2mqtt # Zigbee2mqtt
-      - mqtt        # MQTT broker
+      - zigbee2mqtt  # Zigbee2mqtt
+      - mqtt         # MQTT broker
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.homeassistant.entrypoints=http"

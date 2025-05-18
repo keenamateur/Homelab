@@ -1,0 +1,107 @@
+#Pihole with Unbound and Macvlan
+
+networks:
+  proxy_net:
+    #external: true
+    name: proxy_net
+    driver: bridge
+    attachable: true
+    ipam:
+      config:
+        - subnet: 172.30.10.0/24
+          gateway: 172.30.10.1
+    driver_opts:
+      com.docker.network.bridge.name: proxy_net
+
+
+#  dns_net:
+#    name: dns_net
+#    driver: bridge
+#    attachable: true
+##    ipam:
+#      config:
+#        - subnet: 172.30.53.0/24
+#          gateway: 172.30.53.1
+#    driver_opts:
+#      com.docker.network.bridge.name: dns_net
+
+  macvlan_net:
+    name: macvlan_net
+    driver: macvlan
+    attachable: true
+    driver_opts:
+      parent: enp3s0
+    ipam:
+      config:
+        - subnet: 192.168.2.0/24
+          gateway: 192.168.2.1
+          ip_range: 192.168.2.48/28
+
+services:
+  pihole:
+    image: "pihole/pihole:latest"
+    container_name: "pihole"
+    hostname: "pihole.$MY_DOMAIN"
+    user: "0:0"
+    depends_on:
+      - unbound
+    cap_add:
+      - NET_ADMIN
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/admin/"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    environment:
+      TZ: "Europe/Budapest"
+      WEBPASSWORD: "password"  # Set Passwd
+      PIHOLE_DNS_: "192.168.2.50"
+      REV_SERVER: "true"
+      REV_SERVER_CIDR: "192.168.1.0/24" # Update these fields to match your environment
+      REV_SERVER_TARGET: "192.168.1.1"  # Update these fields to match your environment
+      REV_SERVER_DOMAIN: "lan"          # Update these fields to match your environment
+      # WEBPASSWORD_FILE=/run/secrets/pihole_webpw
+    volumes:
+      - ./pihole/etc-pihole:/etc/pihole
+      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    ports:
+      #- "443:443"
+      - "553:80"
+      - "53:53/tcp"
+      - "53:53/udp"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pihole.entrypoints=http"
+      - "traefik.http.routers.pihole.rule=Host(`pihole.$MY_DOMAIN`)"
+      - "traefik.http.services.pihole.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy_net"
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.53
+        priority: 1000
+      #dns_net:
+        #ipv4_address: 172.30.53.53
+        #priority: 1200
+      macvlan_net:
+        ipv4_address: 192.168.2.53
+        priority: 800
+
+
+  unbound:
+    image: 'mvance/unbound:latest'
+    container_name: unbound
+    environment:
+      - PUID=1000  # Update these fields to match your environment
+      - PGID=1000
+    volumes:
+      - ./unbound/root.hints:/var/unbound/etc/root.hints
+      - ./unbound/pi-hole.conf:/opt/unbound/etc/unbound/pi-hole.conf
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+    restart: unless-stopped
+    networks:
+      macvlan_net:
+        ipv4_address: 192.168.2.50
+        mac_address: 76-55-F1-BE-6B-6B

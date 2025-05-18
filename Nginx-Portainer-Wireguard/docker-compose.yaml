@@ -1,0 +1,113 @@
+networks:
+  proxy_net:
+    external: true
+    # name: proxy_net
+    # driver: bridge
+    # attachable: true
+    # ipam:
+    #   config:
+    #     - subnet: 172.30.30.0/24
+    #       gateway: 172.30.30.1
+    # driver_opts:
+    #   com.docker.network.bridge.name: proxy_net
+
+services:
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    ports:
+      - 8000:8000
+      - 9443:9443
+      - 9000:9000 # for http
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.entrypoints=http"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.$MY_DOMAIN`)"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - "traefik.docker.network=proxy_net"
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.3
+
+  nginx:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx
+    hostname: nginx.$MY_DOMAIN
+    restart: unless-stopped
+    user: "0:0"
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - .env
+    ports:
+      - '80:80'    # HTTP
+      #- '443:443'  # HTTPS
+      - '81:81'    # Nginx Proxy Manager admin felület
+    environment:
+      X_FRAME_OPTIONS: "sameorigin"
+      DB_SQLITE_FILE: "/data/database.sqlite"
+      DISABLE_IPV6: 'true'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nginx.entrypoints=http"
+      - "traefik.http.routers.nginx.rule=Host(`nginx.$MY_DOMAIN`)"
+      - "traefik.http.services.nginx.loadbalancer.server.port=81"
+      - "traefik.docker.network=proxy_net"
+    volumes:
+      - ./nginx/data:/data
+      - ./nginx/letsencrypt:/etc/letsencrypt
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.2
+
+  wg_proxy:
+    image: ghcr.io/wg-easy/wg-easy 
+    container_name: wg_proxy
+    restart: unless-stopped
+    user: "0:0"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    env_file:
+      - .env
+    environment:
+      - WG_HOST=${WG_HOST}
+      - PASSWORD_HASH=${PASSWORD_HASH}
+      - WG_DEFAULT_ADDRESS=10.10.30.x
+      - UI_TRAFFIC_STATS=true
+      - WG_POST_UP=iptables -t nat -A POSTROUTING -s 10.10.30.0/24 -o eth0 -j MASQUERADE; iptables -t nat -A POSTROUTING -s 172.30.10.0/24 -o wg0 -j MASQUERADE; iptables -A FORWARD -i eth0 -o wg0 -j ACCEPT; iptables -A FORWARD -i wg0 -o eth0 -j ACCEPT;
+      - WG_POST_DOWN=iptables -t nat -D POSTROUTING -s 10.10.30.0/24 -o eth0 -j MASQUERADE; iptables -t nat -D POSTROUTING -s 172.30.10.0/24 -o wg0 -j MASQUERADE; iptables -D FORWARD -i eth0 -o wg0 -j ACCEPT; iptables -D FORWARD -i wg0 -o eth0 -j ACCEPT;
+      - WG_DEFAULT_DNS=172.30.10.53
+      - ENABLE_PROMETHEUS_METRICS=true
+      - WG_ALLOWED_IPS=0.0.0.0/0
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.wg_proxy.entrypoints=tcp"
+      - "traefik.tcp.routers.wg_proxy.rule=HostSNI(`wg_proxy.$MY_DOMAIN`)"
+      - "traefik.http.routers.wg_proxy-secure.service=wg_proxy"
+    ports:
+      - "51830:51820/udp"             # udp
+      - "51831:51821/tcp"             # tcp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=1
+    volumes:
+      - ./wg_proxy:/etc/wireguard
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.30
+
+volumes:
+  #nginx_db: {}
+  portainer_data: {}
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: /srv/portainer
+    #   o: bind
