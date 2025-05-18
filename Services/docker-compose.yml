@@ -1,0 +1,153 @@
+services:
+  mqtt:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt
+    hostname: mqtt.$MY_DOMAIN
+    user: "0:0"
+    environment:
+      - PUID=1000
+      - PGID=1000
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    ports:
+      - "52888:52888"
+      - "52889:52889"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mqtt.entrypoints=http"
+      - "traefik.http.routers.mqtt.rule=Host(`mqtt.$MY_DOMAIN`)"
+      - "traefik.http.services.mqtt.loadbalancer.server.port=1883"
+    volumes:
+      - ./mqtt/config:/mosquitto/config:rw
+      - ./mqtt/data:/mosquitto/data:rw
+      - ./mqtt/log:/mosquitto/log:rw
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.10
+
+  nodered:
+    image: nodered/node-red:latest
+    user: "0:0"
+    container_name: nodered
+    hostname: nodered.$MY_DOMAIN
+    depends_on:
+      - mqtt
+    env_file:
+      - .env
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "1880:1880"
+      - "1820:1820"
+    volumes:
+      #- ./nodered/data:/data:rw   # local storage
+      - nodered_data:/data   # docker volume
+      - ./nodered/srv/con_ip:/data/srv/con_ip:rw   # local file path used in flow to store IP address
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nodered.entrypoints=http"
+      - "traefik.http.routers.nodered.rule=Host(`nodered.$MY_DOMAIN`)"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MQTT_HOST=172.30.10.10
+      - MQTT_PORT=1883
+      #- MQTT_httpSOCKET=1888
+      - MQTT_USER=${user}
+      - MQTT_PASSWORD=${password}
+      - JOIN_PORT=1820
+      - MIOS_PORT=3480
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.11
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt
+    container_name: zigbee2mqtt
+    hostname: z2mqtt.$MY_DOMAIN
+    restart: unless-stopped
+    privileged: true  # USB support
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"  # http UI
+    devices:
+      - /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0:/dev/ttyUSB0  # lsusb ; ls -la /dev/serial/by-id/
+    volumes:
+      - ./zigbee2mqtt/data:/app/data  # Configuration and data
+      - /run/udev:/run/udev:ro       # USB 
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.z2mqtt.entrypoints=http"
+      - "traefik.http.routers.z2mqtt.rule=Host(`z2mqtt.$MY_DOMAIN`)"
+      - "traefik.http.services.z2mqtt.loadbalancer.server.port=8080"
+    environment:
+      - TZ=Europe/Budapest
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.12
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    hostname: homeassistant.$MY_DOMAIN
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    privileged: true  # USB/Bluetooth support
+    volumes:
+      - ./homeassistant/config:/config  # Config data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Europe/Berlin
+    env_file:
+      - .env
+    ports:
+      - "8123:8123"  # Home Assistant http UI
+    depends_on:
+      - zigbee2mqtt # Zigbee2mqtt
+      - mqtt        # MQTT broker
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homeassistant.entrypoints=http"
+      - "traefik.http.routers.homeassistant.rule=Host(`homeassistant.$MY_DOMAIN`)"
+      - "traefik.http.services.homeassistant.loadbalancer.server.port=8123"
+      - "traefik.docker.network=proxy_net"
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.5
+
+  homeassistant-db:
+    image: docker.io/postgres:16.3
+    container_name: homeassistant-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=ha_user
+      - POSTGRES_PASSWORD=ha_password
+      - POSTGRES_DB=homeassistant-db
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homeassistant-db.entrypoints=http"
+      - "traefik.http.routers.homeassistant-db.rule=Host(`homeassistant-db.$MY_DOMAIN`)"
+      - "traefik.http.services.homeassistant-db.loadbalancer.server.port=5432"
+    volumes:
+      - ./homeassistant/schemas:/var/lib/postgresql/data
+    networks:
+      db_net:
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  proxy_net:
+    external: true
+  db_net:
+    external: true
+
+volumes:
+  nodered_data: {}
+

@@ -1,0 +1,187 @@
+
+
+// Main process
+function processVeraData(rawData) {
+    // Helper functions
+    const getCategoryName = (id) => {
+        const cat = (rawData.categories || []).find(c => c.id === id);
+        return cat ? cat.name : `Unknown (${id})`;
+    };
+
+    const getRoomName = (id) => {
+        const room = (rawData.rooms || []).find(r => r.id === id);
+        return room ? room.name : `Unknown (${id})`;
+    };
+
+    const parseNumber = (val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        const num = parseFloat(val);
+        return isNaN(num) ? null : num;
+    };
+
+    // Process rooms
+    const rooms = (rawData.rooms || []).map(room => ({
+        id: room.id,
+        name: room.name,
+        section: room.section || null
+    }));
+
+    // Process scenes
+    const scenes = (rawData.scenes || []).map(scene => ({
+        id: scene.id,
+        name: scene.name,
+        room: getRoomName(scene.room),
+        roomId: scene.room,
+        active: scene.active === 1,
+        state: scene.state || null,
+        comment: scene.comment || ""
+    }));
+
+    // Process devices and sensors
+    const devices = [];
+    const sensors = {
+        temperature: [],
+        humidity: [],
+        light: [],
+        power: [],
+        motion: [],
+        door: []
+    };
+
+    (rawData.devices || []).forEach(device => {
+        // Base device info
+        const deviceInfo = {
+            id: device.id,
+            altId: device.altid || null,
+            name: device.name,
+            category: {
+                id: device.category,
+                name: getCategoryName(device.category)
+            },
+            subcategory: device.subcategory,
+            room: getRoomName(device.room),
+            roomId: device.room,
+            status: device.status || null,
+            state: device.state || null,
+            configured: device.configured === "1",
+            commFailure: device.commFailure === "1",
+            parent: device.parent || null,
+            comment: device.comment || ""
+        };
+
+        // Process measurements
+        const watts = parseNumber(device.watts);
+        const kwh = parseNumber(device.kwh);
+        const light = parseNumber(device.light);
+        const humidity = parseNumber(device.humidity);
+        const temperature = parseNumber(device.temperature);
+        const battery = parseNumber(device.batterylevel);
+        const level = parseNumber(device.level);
+
+        if (watts !== null) deviceInfo.watts = watts;
+        if (kwh !== null) deviceInfo.kwh = kwh;
+        if (light !== null) deviceInfo.light = light;
+        if (humidity !== null) deviceInfo.humidity = humidity;
+        if (temperature !== null) deviceInfo.temperature = temperature;
+        if (battery !== null) deviceInfo.battery = battery;
+        
+        // Add level for dimmer devices (category 2)
+        if (device.category === 2 && level !== null) {
+            deviceInfo.level = level;
+        }
+
+        // Add to devices array
+        devices.push(deviceInfo);
+
+        // Organize sensor data
+        if (temperature !== null) {
+            sensors.temperature.push({
+                deviceId: device.id,
+                deviceName: device.name,
+                value: temperature,
+                unit: "°C",
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        if (humidity !== null) {
+            sensors.humidity.push({
+                deviceId: device.id,
+                deviceName: device.name,
+                value: humidity,
+                unit: "%",
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        if (light !== null) {
+            sensors.light.push({
+                deviceId: device.id,
+                deviceName: device.name,
+                value: light,
+                unit: "lux",
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        if (watts !== null) {
+            sensors.power.push({
+                deviceId: device.id,
+                deviceName: device.name,
+                watts: watts,
+                kwh: kwh,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Special handling for motion and door sensors
+        if (device.category === 4) {
+            const sensorData = {
+                deviceId: device.id,
+                deviceName: device.name,
+                tripped: device.tripped === "1",
+                armed: device.armed === "1",
+                lastTrip: device.lasttrip || null,
+                battery: battery
+            };
+
+            if (device.subcategory === 1) { // Door sensors
+                sensors.door.push(sensorData);
+            } else if (device.subcategory === 3) { // Motion sensors
+                sensors.motion.push(sensorData);
+            }
+        }
+    });
+
+    // Return structured data
+    return {
+        metadata: {
+            timestamp: new Date().toISOString(),
+            veraVersion: rawData.version,
+            model: rawData.model,
+            serialNumber: rawData.serial_number,
+            dataVersion: rawData.dataversion
+        },
+        rooms: rooms,
+        scenes: scenes,
+        devices: devices,
+        sensors: sensors,
+        summary: {
+            totalRooms: rooms.length,
+            totalScenes: scenes.length,
+            totalDevices: devices.length,
+            activeScenes: scenes.filter(s => s.active).length,
+            activeDevices: devices.filter(d => d.status === "1").length
+        }
+    };
+}
+
+// Main execution
+try {
+    const rawData = msg.payload;
+    msg.payload = processVeraData(rawData);
+} catch (error) {
+    node.error("Error processing Vera data: " + error.message, msg);
+}
+
+return msg;

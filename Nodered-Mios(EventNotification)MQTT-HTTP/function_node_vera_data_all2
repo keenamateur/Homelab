@@ -1,0 +1,25 @@
+// Preapir for HTTP
+let jsonData = msg.payload;
+
+// Port
+let port = '1904';
+
+// Set IP 
+//let ip = '10.10.10.2'; 
+let ip = flow.get("con_ip") || "10.10.50.2";
+
+// Create URL
+let url = `http://${ip}:${port}`;
+
+// Create new message
+let newMsg = {
+    payload: jsonData,
+    headers: {
+        "Content-Type": "application/json"
+    },
+    method: "GET", // set request type
+    url: url
+};
+
+// return new message
+return newMsg;
