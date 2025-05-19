@@ -1,0 +1,143 @@
+services:
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    restart: unless-stopped
+    env_file:
+      - .env 
+    #user: "0:${DOCKER_GROUP_ID}"
+    user: "telegraf:${DOCKER_GROUP_ID}"
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.telegraf.entrypoints=http"
+      - "traefik.http.routers.telegraf.rule=Host(`telegraf.$MY_DOMAIN`)"
+      #- "traefik.http.services.telegraf.loadbalancer.server.port=8092"
+    #depends_on:
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Docker metrics
+      - /proc:/host/proc:ro  # proc  metrics
+      - /sys:/host/sys:ro    # system metricxsc
+    environment:
+      - DOCKER_GROUP_ID=$(stat -c '%g' /var/run/docker.sock)    # group id of the docker socket
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.60
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    hostname: influxdb.$MY_DOMAIN
+    restart: unless-stopped
+    user: '0:${DOCKER_GROUP_ID}'
+    depends_on:
+      - prometheus
+      - grafana
+      - telegraf
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - .env 
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${DOCKER_INFLUXDB_INIT_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${DOCKER_INFLUXDB_INIT_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${DOCKER_INFLUXDB_INIT_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${DOCKER_INFLUXDB_INIT_BUCKET}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - influxdb_data:/var/lib/influxdb2:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.influxdb.entrypoints=http"
+      - "traefik.http.routers.influxdb.rule=Host(`influxdb.$MY_DOMAIN`)"
+      - "traefik.http.services.influxdb.loadbalancer.server.port=8086"
+      - "traefik.docker.network=proxy_net"
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.61
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus.$MY_DOMAIN
+    user: "0:0"
+    depends_on:
+      - telegraf
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - .env 
+    environment:
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - "9090:9090"
+      - "9273:9273"
+    volumes:
+      - prometheus_data:/etc/prometheus
+      #- ./prometheus/data:/etc/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.entrypoints=http"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.$MY_DOMAIN`)"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+      - "traefik.docker.network=proxy_net"
+
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.62
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana.$MY_DOMAIN
+    depends_on:
+      - telegraf
+      - prometheus
+    env_file:
+      - .env 
+    ports:
+      - "53001:3000"
+    user: "0:0"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - GF_SECURITY_ADMIN_USER=$GF_SECURITY_ADMIN_USER
+      - GF_SECURITY_ADMIN_PASSWORD=$GF_SECURITY_ADMIN_PASSWORD
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    labels:
+      - "traefik.http.routers.grafana.entrypoints=http"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.$MY_DOMAIN`)"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy_net"
+    networks:
+      proxy_net:
+        ipv4_address: 172.30.10.63
+
+networks:
+  proxy_net:
+    external: true
+  db_net:
+    external: true
+
+volumes:
+  grafana_data: {}
+  prometheus_data: {}
+  influxdb_data: {}
+
