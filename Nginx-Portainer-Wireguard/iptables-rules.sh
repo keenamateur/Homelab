@@ -23,5 +23,5 @@ docker exec -it wg_proxy iptables -A FORWARD -i eth0 -o wg0 -s 172.30.10.0/24 -d
 docker exec -it wg_proxy iptables -A FORWARD -i wg0 -o eth0 -s 10.10.30.0/24 -d 172.30.10.0/24 -j ACCEPT
 docker exec -it wg_proxy iptables -t nat -A POSTROUTING -s 172.30.10.0/24 -o wg0 -d 10.10.30.0/24 -j MASQUERADE
 # NODERED->WG (IP ROUTE)
-docker exec -it nodered ip route del 10.10.30.0/24 via 172.30.10.30 dev eth0
-docker exec -it nodered ip route add 10.10.30.0/24 via 172.30.10.30 dev eth0
+docker exec -it nodered ip route del 10.10.30.0/24 via 172.30.10.30 dev eth0   # Need this to set the route from the nodered container to the wireguard client
+docker exec -it nodered ip route add 10.10.30.0/24 via 172.30.10.30 dev eth0   # Need this to set the route from the nodered container to the wireguard client

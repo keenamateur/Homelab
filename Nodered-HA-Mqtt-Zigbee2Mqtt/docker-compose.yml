@@ -11,8 +11,8 @@ services:
       - NET_ADMIN
     restart: unless-stopped
     ports:
-      - "52888:52888"
-      - "52889:52889"
+      - "1883:1883"  # MQTT change to your port
+      - "1889:1889"  # WebSocket change to your port
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mqtt.entrypoints=http"
