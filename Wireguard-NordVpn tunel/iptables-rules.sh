@@ -1,13 +1,17 @@
 #!/bin/bash
 
 WG_CONTAINER="YOUR_WIREGUARD_CONTAINER_NAME"  # wg_de
-WG_SUBNET="10.10.10.0/24"  
+#WG_SUBNET="10.10.10.0/24"  
 VPN_CONTAINER="YOUR_NORDVPN_CONTAINER_NAME"   # nvpn_de
 LAN_SUBNET="192.168.0.0/16"
 ETH="enp3s0"
 
 # WireGuard & NordVPN data
 #WG_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $WG_CONTAINER)
+WG_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $WG_CONTAINER)
+WG_NET_ID=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' $WG_CONTAINER)
+WG_SUBNET=$(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}}{{end}}' $WG_NET_ID)
+
 VPN_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $VPN_CONTAINER)
 VPN_NET_ID=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' $VPN_CONTAINER)
 VPN_SUBNET=$(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}}{{end}}' $VPN_NET_ID)
