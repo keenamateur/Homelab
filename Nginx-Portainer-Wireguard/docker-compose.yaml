@@ -47,7 +47,7 @@ services:
     ports:
       - '80:80'    # HTTP
       #- '443:443'  # HTTPS
-      - '81:81'    # Nginx Proxy Manager admin felület
+      - '81:81'    # Nginx Proxy Manager UI
     environment:
       X_FRAME_OPTIONS: "sameorigin"
       DB_SQLITE_FILE: "/data/database.sqlite"
@@ -109,5 +109,5 @@ volumes:
     # driver: local
     # driver_opts:
     #   type: none
-    #   device: /srv/portainer
+    #   device: /path/portainer
     #   o: bind

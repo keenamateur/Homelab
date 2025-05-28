@@ -20,9 +20,9 @@ services:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro  # Docker metrics
       - /proc:/host/proc:ro  # proc  metrics
-      - /sys:/host/sys:ro    # system metricxsc
+      - /sys:/host/sys:ro    # system metrics
     environment:
-      - DOCKER_GROUP_ID=$(stat -c '%g' /var/run/docker.sock)    # group id of the docker socket
+      - DOCKER_GROUP_ID=$(stat -c '%g' /var/run/docker.sock)    # read/set group id of the docker socket
       - HOST_PROC=/host/proc
       - HOST_SYS=/host/sys
     networks:
