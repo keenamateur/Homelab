@@ -13,6 +13,42 @@ networks:
 
 services:
 
+  samba_proxy:
+    image: dperson/samba
+    container_name: samba_proxy
+    user: '0:0'
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - nginx
+    #network_mode: service:nvpn_share
+    ports:
+      - '137:137/udp'  
+      - '138:138/udp'  
+      - '139:139/tcp'  
+      - '445:445/tcp'  
+    environment:
+      - TZ=Hungary/Budapest
+      - PUID=1000
+      - PGID=1000
+    #read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    volumes:
+      - /path/to:/mnt:z
+      - /path/to:/mnt2:z
+      - /path/to/share:/mnt3:z
+      # https://github.com/dperson/samba
+      # <name;/path>[;browse;readonly;guest;users;admins;writelist;comment]
+    command: '-s "read;/mnt2;yes;yes;no;username;admin" -u "username;password" -p -s "readwrite;/mnt;yes;no;no;admin" -u "admin;admin" -p -s "read2;/mnt3;yes;yes;no;reader;admin" -u "reader;reader111" -p'
+    networks:
+      proxy_net:
+        #ipv4_address: 172.30.10.43
+
+
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
