@@ -67,8 +67,6 @@ services:
     networks:
       - db_net
         
-
-  # --- Másik Postgres kontener (példa más szolgáltatáshoz) ---
   postgres_n8n2:
     image: postgres:15
     container_name: postgres_n8n2
