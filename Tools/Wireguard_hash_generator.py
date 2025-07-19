@@ -1,6 +1,6 @@
 ## Python
-# sudo apt install -y python3 python3-pip  
-# pip install bcrypt  
+# sudo apt install -y python3 python3-pip
+# pip install bcrypt
 
 ## wg_hash_generator.py
 

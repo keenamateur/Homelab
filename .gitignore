@@ -2,3 +2,6 @@
 # YoYo AI version control directory
 .yoyo/
 .git*/
+.vscode/
+# Ignore all files in the .vscode directory
+.vscode/*
