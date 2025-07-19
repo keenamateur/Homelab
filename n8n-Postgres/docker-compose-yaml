@@ -40,7 +40,6 @@ services:
       db_net:
         ipv4_address: 172.30.11.38
 
-  # --- PostgreSQL adatbázis n8n-hez ---
   postgres_n8n:
     image: postgres:15
     container_name: postgres_n8n
@@ -56,8 +55,6 @@ services:
     networks:
       - db_net
         
-
-  # --- Másik Postgres kontener (példa más szolgáltatáshoz) ---
   postgres_n8n2:
     image: postgres:15
     container_name: postgres_n8n2
