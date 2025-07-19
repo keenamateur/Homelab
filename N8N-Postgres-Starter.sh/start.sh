@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Space-separated list of containers
-CHECK_CONTAINERS="n8n"
+CHECK_CONTAINERS="n8n postgres_n8n"
 
 # Function to check and recover container state
 check_and_recover_container() {

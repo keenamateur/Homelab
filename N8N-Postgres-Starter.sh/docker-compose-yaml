@@ -40,6 +40,17 @@ services:
       db_net:
         ipv4_address: 172.30.11.38
 
+  # --- Cloudflare Tunnel ---
+  cf_tunnel1:
+    container_name: cf_tunnel1
+    image: cloudflare/cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    networks:
+      - proxy_net
+    environment:
+      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
+
   # --- PostgreSQL adatbázis n8n-hez ---
   postgres_n8n:
     image: postgres:15
