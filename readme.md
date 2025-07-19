@@ -107,7 +107,7 @@ This flow integrates multiple home automation systems including:
 
 ### **4. System Monitoring**
 - **Vera Data Polling**:
-  - HTTP request to `http://192.168.4.10:3480/data_request`
+  - HTTP request to `http://your_vera_ip:3480/data_request`
   - Processes full system state (devices, rooms, scenes)
 - **Output Channels**:
   - File dump (`vera_full.txt`)
