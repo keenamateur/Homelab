@@ -163,7 +163,7 @@ graph LR
     A[MQTT Input] --> B[IP Storage]
     B --> C[Flow Variable]
     C --> D[MIOS Devices]
-    D --> E[Processing]
+    D --> E{Processing}
     E --> F[HTTP Control]
     E --> G[InfluxDB]
     E --> H[Join]
