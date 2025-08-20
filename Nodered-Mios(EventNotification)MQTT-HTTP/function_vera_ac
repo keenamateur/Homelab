@@ -58,8 +58,7 @@ if (match) {
 
     // Get IP address from flow context or msg.payload 
 
-    let ip = flow.get("con_ip") || msg.payload;  // If the IP is not in flow context, use msg.payload
-
+    let ip = global.get("con_ip");
     if (!ip || typeof ip !== "string" || !ip.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
         return null; // If the IP is not valid, return null
     }
@@ -80,5 +79,5 @@ if (match) {
 
     return newMsg;
 } else {
-    return null; // If regex does not match, return null
+    return null;
 }
