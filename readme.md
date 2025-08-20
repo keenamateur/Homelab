@@ -158,19 +158,19 @@ The flow is organized into clearly defined sections using groups and clean wirin
 ---
 
 ## **Technical Architecture**
+
 ```mermaid
 graph LR
-    A[MQTT Input] --> B[IP Storage]
-    B --> C[Flow Variable]
-    C --> D[MIOS Devices]
-    D --> E{Processing}
-    E --> F[HTTP Control]
-    E --> G[InfluxDB]
+    A[MQTT] --> B[IP File]
+    B --> C[con_ip]
+    C --> D[Vera Data]
+    D --> E[Process]
+    E --> F[HTTP]
+    E --> G[DB]
     E --> H[Join]
-    D --> I[System Poll]
-    I --> J[File/HTTP]
+    C --> I[Poll]
+    I --> J[Export]
 ```
-
 ## **Key Features**
 1. **Dynamic IP Handling**
    - Survives IP changes via MQTT updates
