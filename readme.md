@@ -1,5 +1,7 @@
+# Homelab 
 
-# Tasker MIOS Zigbee HTTP Home Automation Hub (Node-RED Flow)
+
+# MIOS Zigbee HTTP Home Automation Hub (Node-RED Flow)
 
 A comprehensive and robust Node-RED flow acting as a central automation hub for a Vera (MIOS) based smart home. This flow integrates various systems including Vera controllers, Zigbee2MQTT devices, MQTT messaging, Join by joaoapps, and InfluxDB for time-series data logging, creating a unified and intelligent home management system.
 
