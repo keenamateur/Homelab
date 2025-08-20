@@ -6,7 +6,7 @@ let port = '1904';
 
 // Set IP 
 //let ip = '10.10.10.2'; 
-let ip = flow.get("con_ip") || "10.10.50.2";
+let ip = global.get("con_ip") || "10.10.50.2";
 
 // Create URL
 let url = `http://${ip}:${port}`;
